@@ -22,7 +22,7 @@ def obtenerAlmacen(model):
         for contenido in content: 
             if isinstance(contenido, Caja):
                 if contenido.state == contenido.esCaja:
-                    if contenido.stack ==  5:
+                    if contenido.pila ==  5:
                         grid[x][y] = 4
                 else:
                     grid[x][y] = 1
@@ -37,48 +37,36 @@ class Robot(Agent):
     def __init__(self, unique_id, model, pos):
         super().__init__(unique_id, model)
         self.next = None
-        self.status = 0
+        self.status = False
         self.x, self.y = pos
     
     def step(self):
-        if self.status == 0:
-            if self.model.contCajas != self.model.K:
-                self.model.numSteps += 1
-                
+        if self.status == False:
             neighbours = self.model.grid.get_neighbors(self.pos, moore = False, include_center = True)
             for neighbor in neighbours:
                 if neighbor.pos == self.pos:
-                    if neighbor.state == neighbor.noCaja:
+                    if (neighbor.state == neighbor.noCaja and 
+                        self.status == False):
                         neighborhood = self.model.grid.get_neighborhood(self.pos, moore = False, include_center = True)
                         self.next = self.random.choice(neighborhood)
-                    
                     else:
-                        if(neighbor.stack == 0):
+                        if(neighbor.pila == 0 and 
+                            self.status == False):
                             neighbor.state = neighbor.noCaja
-                            self.status = 1
-                            self.model.contCajas += 1
+                            self.status = True
                             self.next = self.pos
                         else:
                             neighborhood = self.model.grid.get_neighborhood(self.pos, moore = False, include_center = True)
                             self.next = self.random.choice(neighborhood)
                     break
-                    
         else:
-            
-            if self.model.contCajas != self.model.K - 1:
-                self.model.numSteps += 1
-                
             if self.x != self.model.moveStackX:
                 self.x -= 1
-            
             elif self.x == self.model.moveStackX:
                 if self.y != self.model.moveStackY:
                     if self.y < 0:
-                        self.y = self.y * -1
-                        self.y = self.y % self.model.width
-                        self.y = self.model.width - self.y
+                        self.y = self.model.width - (self.y * -1) % self.model.width
                     self.y -= 1
-                    
                 elif self.y == self.model.moveStackY:
                      
                     neighbours = self.model.grid.get_neighbors(self.pos, moore = False, include_center = True)
@@ -87,25 +75,27 @@ class Robot(Agent):
                             if neighbor.pos == self.pos:                             
                                 if neighbor.state == neighbor.noCaja:
                                     neighbor.state = neighbor.esCaja
-                                    neighbor.stack = 1
-                                    self.status = 0
-
+                                    self.model.contCajas += 1
+                                    neighbor.pila = 1
+                                    self.status = False
                                     self.x += 1
                                     
                                 else:
-                                    if (neighbor.stack == 4):
-                                        neighbor.stack += 1
+                                    if (neighbor.pila == 4):
+                                        neighbor.pila += 1
+                                        self.status = False
+                                        self.model.contCajas += 1
                                         self.model.moveStackY += 1
-                                        self.status = 0
                                         self.x += 1
                                         
-                                        if self.model.moveStackY == self.model.width - 1:
+                                        if self.model.moveStackY == self.model.width - 2:
                                             self.model.moveStackX += 1
                                             self.model.moveStackY = 0
                                         
                                     else:
-                                        neighbor.stack += 1
-                                        self.status = 0
+                                        neighbor.pila += 1
+                                        self.model.contCajas += 1
+                                        self.status = False
                                         self.x += 1
                 
                                 break
@@ -122,19 +112,19 @@ class Caja(Agent):
         super().__init__(pos, model)
         self.x, self.y = pos
         self.state = state
-        self.stack = 0
+        self.pila = 0
 
 class Almacen(Model):
     def __init__(self, width, height, K):
         self.K = K
+        self.moveStackY = 0
+        self.moveStackX = 0
         self.width = width
         self.numRobots = 5
         self.grid = MultiGrid(width, height,True)
         self.schedule = SimultaneousActivation(self)
-        self.moveStackY = 0
-        self.moveStackX = 0
         self.numSteps = 0
-        self.contCajas = 1
+        self.contCajas = 0
         
         
         emptys = list(self.grid.empties)
@@ -155,15 +145,44 @@ class Almacen(Model):
             
         i = 0
         while (i<=4):
-            x = random.randint(0, height - 1)
-            y = random.randint(0, width - 1)
-            robot = Robot(i, self, (x,y))
-            self.grid.place_agent(robot, (x,y))
-            self.schedule.add(robot)
-            i = i + 1
+            if i == 0:
+                x = random.randint(0, height - 1)
+                y = random.randint(0, width - 1)
+                robot = Robot(i, self, (x,y))
+                self.grid.place_agent(robot, (x,y))
+                self.schedule.add(robot)
+                i = i + 1
+            if i == 1:
+                x = random.randint(0, height - 1)
+                y = random.randint(0, width - 1)
+                robot = Robot(i, self, (x,y))
+                self.grid.place_agent(robot, (x,y))
+                self.schedule.add(robot)
+                i = i + 1
+            if i == 2:
+                x = random.randint(0, height - 1)
+                y = random.randint(0, width - 1)
+                robot = Robot(i, self, (x,y))
+                self.grid.place_agent(robot, (x,y))
+                self.schedule.add(robot)
+                i = i + 1
+            if i == 3:
+                x = random.randint(0, height - 1)
+                y = random.randint(0, width - 1)
+                robot = Robot(i, self, (x,y))
+                self.grid.place_agent(robot, (x,y))
+                self.schedule.add(robot)
+                i = i + 1
+            if i == 4:
+                x = random.randint(0, height - 1)
+                y = random.randint(0, width - 1)
+                robot = Robot(i, self, (x,y))
+                self.grid.place_agent(robot, (x,y))
+                self.schedule.add(robot)
+                i = i + 1
             
         self.colectorDatos = DataCollector(model_reporters = {'Grid': obtenerAlmacen})
         
     def step(self):
         self.colectorDatos.collect(self)
-        self.schedule.step() 
+        self.schedule.step()
