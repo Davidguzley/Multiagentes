@@ -40,6 +40,7 @@ modelo = Almacen(M, N, K)
 while((time.time() - iniciarTiempo) < MAX_GENERATIONS):
     modelo.step()
     if(modelo.contCajas != K):
+        modelo.numSteps += 1
         """ Guardamos el tiempo que le tomó correr al modelo. """
         tiempoTranscurrido = time.time() - iniciarTiempo
 
